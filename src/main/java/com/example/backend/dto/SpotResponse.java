@@ -18,6 +18,8 @@ public class SpotResponse {
 
     private String title;
     private String description;
+    private double mapx;
+    private double mapy;
     private LocalDateTime start_at;
     private LocalDateTime end_at;
 
@@ -28,6 +30,8 @@ public class SpotResponse {
                 .receive(spot.getReceive())
                 .title(tourAPIResponse.getTitle())
                 .description(tourAPIResponse.getDescription())
+                .mapx(tourAPIResponse.getMapx())
+                .mapy(tourAPIResponse.getMapy())
                 .start_at(tourAPIResponse.getStart_at())
                 .end_at(tourAPIResponse.getEnd_at())
                 .build();
