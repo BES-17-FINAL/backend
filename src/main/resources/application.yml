@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://54.180.91.172:5432/travelhub
+    url: jdbc:postgresql://localhost:5432/travelhub
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver

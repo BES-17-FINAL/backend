@@ -21,5 +21,6 @@ public class Spot {
 
     private float receive;
 
+    @Enumerated(EnumType.STRING)
     private SpotType type;
 }
