@@ -28,6 +28,8 @@ public class SpotResponse {
     private double mapy;
     private LocalDateTime start_at;
     private LocalDateTime end_at;
+    private String useTime;
+    private String restDate;
 
     public static SpotResponse form(Spot spot, TourAPIResponse tourAPIResponse){
         return SpotResponse.builder()
@@ -48,6 +50,8 @@ public class SpotResponse {
                 .mapy(tourAPIResponse.getMapy())
                 .start_at(tourAPIResponse.getStart_at())
                 .end_at(tourAPIResponse.getEnd_at())
+                .useTime(tourAPIResponse.getUseTime())
+                .restDate(tourAPIResponse.getRestDate())
                 .build();
     }
 }
