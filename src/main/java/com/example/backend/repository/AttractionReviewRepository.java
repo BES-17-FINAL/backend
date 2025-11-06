@@ -4,6 +4,9 @@ import com.example.backend.entity.AttractionReview;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -12,13 +15,21 @@ public class AttractionReviewRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public void save(AttractionReview review) {
-        String sql = "INSERT INTO attraction_review (user_id, attraction_id, rating, comment) VALUES (?, ?, ?, ?)";
-        jdbcTemplate.update(sql,
+    public AttractionReview save(AttractionReview review) {
+        String sql = """
+            INSERT INTO attraction_review (user_id, attraction_id, rating, comment, created_at)
+            VALUES (?, ?, ?, ?, ?) RETURNING id
+        """;
+
+        Long id = jdbcTemplate.queryForObject(sql, Long.class,
                 review.getUserId(),
                 review.getAttractionId(),
                 review.getRating(),
-                review.getComment());
+                review.getComment(),
+                Timestamp.valueOf(LocalDateTime.now()));
+
+        review.setId(id);
+        return review;
     }
 
     public List<AttractionReview> findByAttractionId(Long attractionId) {
@@ -36,7 +47,7 @@ public class AttractionReviewRepository {
     }
 
     public Double getAverageRating(Long attractionId) {
-        String sql = "SELECT AVG(rating) FROM attraction_review WHERE attraction_id = ?";
+        String sql = "SELECT COALESCE(AVG(rating), 0) FROM attraction_review WHERE attraction_id = ?";
         return jdbcTemplate.queryForObject(sql, Double.class, attractionId);
     }
 }
