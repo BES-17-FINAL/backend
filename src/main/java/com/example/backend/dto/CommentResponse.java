@@ -15,7 +15,7 @@ public class CommentResponse {
 
     private Long id;
     private String text;
-    private Integer likeCount;
+    private Integer likeCount = 0;
     private LocalDateTime createdAt;
     private Long userId;
     private String nickname;

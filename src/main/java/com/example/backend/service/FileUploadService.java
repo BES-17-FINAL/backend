@@ -57,13 +57,22 @@ public class FileUploadService {
         }
 
         String filename = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+        
+        if (filename == null || filename.isEmpty()) {
+            log.warn("잘못된 이미지 URL입니다: {}", imageUrl);
+            return;
+        }
+        
         Path filePath = Paths.get(uploadDir, filename);
 
         try {
-            Files.deleteIfExists(filePath);
-            log.info("파일 삭제 성공: {}", filename);
+            if (Files.deleteIfExists(filePath)) {
+                log.info("파일 삭제 성공: {}", filename);
+            } else {
+                log.warn("삭제할 파일이 존재하지 않습니다: {}", filename);
+            }
         } catch (IOException e) {
-            log.error("파일 삭제 실패", e);
+            log.error("파일 삭제 실패: {}", filename, e);
         }
     }
 

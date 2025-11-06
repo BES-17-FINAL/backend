@@ -15,6 +15,4 @@ public class PostRequest {
     private String content;
 
     private PostCategory category;
-
-    private String imageUrl;
 }

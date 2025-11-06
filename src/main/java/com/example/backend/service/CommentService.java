@@ -45,7 +45,12 @@ public class CommentService {
                 .build();
 
         comment = commentRepository.save(comment);
-        return CommentResponse.fromEntity(comment);
+        
+        CommentResponse response = CommentResponse.fromEntity(comment);
+        Long likeCount = commentLikeRepository.countByCommentId(comment.getId());
+        response.setLikeCount(likeCount != null ? likeCount.intValue() : 0);
+        response.setLiked(false); 
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -54,17 +59,19 @@ public class CommentService {
         User currentUser = getCurrentUserFromContext();
 
         if (!postRepository.existsByIdAndDeletedAtIsNull(postId)) {
-            throw new RuntimeException("게시글을 찾을 수 없습니다. (ID: " + postId + ")");
+            throw new ResourceNotFoundException("게시글을 찾을 수 없습니다. (ID: " + postId + ")");
         }
 
         Page<Comment> comments = commentRepository.findByPostIdAndDeletedAtIsNull(postId, pageable);
 
         return comments.map(comment -> {
             boolean isLiked = commentLikeRepository.existsByUserAndComment(currentUser, comment);
+            Long likeCount = commentLikeRepository.countByCommentId(comment.getId());
 
             CommentResponse response = CommentResponse.fromEntity(comment);
 
             response.setLiked(isLiked);
+            response.setLikeCount(likeCount != null ? likeCount.intValue() : 0);
 
             return response;
         });
@@ -75,15 +82,21 @@ public class CommentService {
         User currentUser = getCurrentUserFromContext();
 
         Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
-                .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다. (ID: " + commentId + ")"));
+                .orElseThrow(() -> new ResourceNotFoundException("댓글을 찾을 수 없습니다. (ID: " + commentId + ")"));
 
         if (!comment.getUser().getUserId().equals(currentUser.getUserId())) {
-            throw new RuntimeException("댓글을 수정할 권한이 없습니다.");
+            throw new UnauthorizedException("댓글을 수정할 권한이 없습니다.");
         }
 
         comment.updateText(request.getText());
 
-        return CommentResponse.fromEntity(comment);
+        CommentResponse response = CommentResponse.fromEntity(comment);
+        boolean isLiked = commentLikeRepository.existsByUserAndComment(currentUser, comment);
+        Long likeCount = commentLikeRepository.countByCommentId(comment.getId());
+        response.setLiked(isLiked);
+        response.setLikeCount(likeCount != null ? likeCount.intValue() : 0);
+        
+        return response;
     }
 
     public void deleteComment(Long commentId) {
@@ -91,10 +104,10 @@ public class CommentService {
         User currentUser = getCurrentUserFromContext();
 
         Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
-                .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다. (ID: " + commentId + ")"));
+                .orElseThrow(() -> new ResourceNotFoundException("댓글을 찾을 수 없습니다. (ID: " + commentId + ")"));
 
         if (!comment.getUser().getUserId().equals(currentUser.getUserId())) {
-            throw new RuntimeException("댓글을 삭제할 권한이 없습니다.");
+            throw new UnauthorizedException("댓글을 삭제할 권한이 없습니다.");
         }
 
         comment.markAsDeleted();
@@ -111,16 +124,12 @@ public class CommentService {
 
         if (like.isPresent()) {
             commentLikeRepository.delete(like.get());
-            comment.removeLike();
-
         } else {
             CommentLike newLike = CommentLike.builder()
                     .user(currentUser)
                     .comment(comment)
                     .build();
             commentLikeRepository.save(newLike);
-
-            comment.addLike();
         }
     }
 
