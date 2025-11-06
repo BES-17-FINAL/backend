@@ -1,7 +1,6 @@
-package com.example.backend.entity;
+package com.example.backend.dto;
 
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Getter
@@ -9,10 +8,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AttractionReview {
+public class AttractionReviewResponseDto {
     private Long id;
-    private Long userId;
-    private Long attractionId;
+    private String nickname;
     private int rating;
     private String comment;
     private LocalDateTime createdAt;
