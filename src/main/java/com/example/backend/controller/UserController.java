@@ -28,7 +28,7 @@ public class UserController {
     @PutMapping("/edit")
     public UpdateUserProfileResponse edit(
             @Valid @RequestBody UpdateUserProfileRequest req,
-            @AuthenticationPrincipal(expression = "userid") Long userId,
+            @AuthenticationPrincipal(expression = "userId") Long userId,
             @AuthenticationPrincipal(expression = "email") String email
     ) {
         Long resolvedId = userService.resolveUserId(userId, email);
