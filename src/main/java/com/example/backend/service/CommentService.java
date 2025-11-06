@@ -27,7 +27,6 @@ import java.util.Optional;
 @Transactional
 public class CommentService {
 
-
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final CommentLikeRepository commentLikeRepository;
@@ -134,13 +133,12 @@ public class CommentService {
 
         Object principal = authentication.getPrincipal();
 
-        // 3. 'JwtFilter'가 'User' 객체를 넣었는지 확인합니다.
         if (principal instanceof User) {
-            // 4. 'User' 객체로 '형변환'해서 '바로' 반환(return)합니다!
             return (User) principal;
         } else {
             throw new ResourceNotFoundException("유저 인증 정보가 올바르지 않습니다. (Principal: " + principal.toString() + ")");
         }
     }
+
 }
 

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import com.example.backend.entity.PostCategory;
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,4 +14,7 @@ public class PostRequest {
 
     private String content;
 
+    private PostCategory category;
+
+    private String imageUrl;
 }

@@ -12,7 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
+import com.example.backend.entity.PostCategory;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -20,7 +20,8 @@ import java.util.List;
 @Entity
 @Table(name = "posts", indexes = {
         @Index(name = "idx_post_user_id", columnList = "user_id"),
-        @Index(name = "idx_post_created_at", columnList = "created_at")
+        @Index(name = "idx_post_created_at", columnList = "created_at"),
+        @Index(name = "idx_post_category", columnList = "category")
 })
 public class Post {
 
@@ -32,11 +33,18 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false)
+    private PostCategory category;
+
     @Column(length = 255, nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
+
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -52,9 +60,14 @@ public class Post {
 
     private LocalDateTime deletedAt;
 
-    public void updatePost(String newTitle, String newContent) {
+    public void updatePost(String newTitle, String newContent, PostCategory newCategory) {
         this.title = newTitle;
         this.content = newContent;
+        this.category = newCategory;
+    }
+
+    public void updateImageUrl(String newImageUrl) {
+        this.imageUrl = newImageUrl;
     }
 
     public void markAsDeleted() {

@@ -2,6 +2,7 @@ package com.example.backend.dto;
 
 import com.example.backend.entity.Post;
 import com.example.backend.entity.User;
+import com.example.backend.entity.PostCategory;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,11 +19,14 @@ public class PostResponse {
     private String content;
     private LocalDateTime createdAt;
 
+    private PostCategory category;
+
     private Long userId;
     private String nickname;
     private Long likeCount = 0L;
     private boolean isLiked = false;
     private Long commentCount = 0L;
+    private String imageUrl;
 
     public static PostResponse fromEntity(Post post) {
         PostResponse response = new PostResponse();
@@ -30,6 +34,10 @@ public class PostResponse {
         response.setTitle(post.getTitle());
         response.setContent(post.getContent());
         response.setCreatedAt(post.getCreatedAt());
+
+        response.setCategory(post.getCategory());
+
+        response.setImageUrl(post.getImageUrl());
 
         if (post.getUser() != null) {
             User user = post.getUser();
