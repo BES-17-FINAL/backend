@@ -18,8 +18,8 @@ public class UserController {
 
     @GetMapping("/me")
     public UserProfileResponse me(
-            @AuthenticationPrincipal(expression = "id") Long userId,
-            @AuthenticationPrincipal(expression = "username") String email
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+            @AuthenticationPrincipal(expression = "email") String email
     ) {
         Long resolvedId = userService.resolveUserId(userId, email);
         return userService.me(resolvedId);
@@ -28,8 +28,8 @@ public class UserController {
     @PutMapping("/edit")
     public UpdateUserProfileResponse edit(
             @Valid @RequestBody UpdateUserProfileRequest req,
-            @AuthenticationPrincipal(expression = "id") Long userId,
-            @AuthenticationPrincipal(expression = "username") String email
+            @AuthenticationPrincipal(expression = "userid") Long userId,
+            @AuthenticationPrincipal(expression = "email") String email
     ) {
         Long resolvedId = userService.resolveUserId(userId, email);
         userService.edit(resolvedId, req);
