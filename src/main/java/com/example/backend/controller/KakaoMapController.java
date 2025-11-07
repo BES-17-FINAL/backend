@@ -15,7 +15,7 @@ public class KakaoMapController {
     private final KakaoMapService kakaoMapService;
 
     @GetMapping("/convert-coordinates")
-    public ResponseEntity<Map<String, Double>> convertCoordinates(
+    public ResponseEntity<?> convertCoordinates(
             @RequestParam double longitude,
             @RequestParam double latitude
     ) {
@@ -23,19 +23,26 @@ public class KakaoMapController {
             Map<String, Double> result = kakaoMapService.getKakaoCoordinates(longitude, latitude);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "좌표 변환 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 
     @GetMapping("/search-address")
-    public ResponseEntity<Map<String, Object>> searchAddress(
+    public ResponseEntity<?> searchAddress(
             @RequestParam String address
     ) {
         try {
             Map<String, Object> result = kakaoMapService.searchAddress(address);
             return ResponseEntity.ok(result);
+        } catch (IllegalStateException e) {
+            // API 키가 없을 때
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            // 기타 에러
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "주소 검색 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 }
