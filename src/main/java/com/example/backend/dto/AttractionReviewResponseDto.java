@@ -1,5 +1,6 @@
 package com.example.backend.dto;
 
+import com.example.backend.entity.AttractionReview;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -14,4 +15,14 @@ public class AttractionReviewResponseDto {
     private int rating;
     private String comment;
     private LocalDateTime createdAt;
+
+    public static AttractionReviewResponseDto from(AttractionReview attractionReview) {
+        return AttractionReviewResponseDto.builder()
+                .id(attractionReview.getId())
+                .comment(attractionReview.getComment())
+                .createdAt(attractionReview.getCreatedAt())
+                .nickname(attractionReview.getUserId().getNickname())
+                .rating(attractionReview.getRating())
+                .build();
+    }
 }

@@ -2,6 +2,8 @@ package com.example.backend.repository;
 
 import com.example.backend.entity.AttractionReview;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -10,7 +12,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-@RequiredArgsConstructor
+public interface AttractionReviewRepository extends JpaRepository<AttractionReview, Long> {
+
+}
+/*
 public class AttractionReviewRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -37,7 +42,7 @@ public class AttractionReviewRepository {
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             AttractionReview r = new AttractionReview();
             r.setId(rs.getLong("id"));
-            r.setUserId(rs.getLong("user_id"));
+            r.setUserId(rs.get("user_id"));
             r.setAttractionId(rs.getLong("attraction_id"));
             r.setRating(rs.getInt("rating"));
             r.setComment(rs.getString("comment"));
@@ -51,3 +56,4 @@ public class AttractionReviewRepository {
         return jdbcTemplate.queryForObject(sql, Double.class, attractionId);
     }
 }
+*/
