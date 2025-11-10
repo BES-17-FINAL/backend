@@ -1,13 +1,16 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.TourAPIResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +19,9 @@ import java.util.regex.Pattern;
 public class TourAPIService {
 
     private final WebClient webClient;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("${secret_key}")
     private String secretKey;
@@ -26,31 +32,9 @@ public class TourAPIService {
     private Integer apiType;
     public TourAPIResponse getSpotDetails(Long id) {
 
-        // ✅ 1️⃣ detailCommon2 (기본정보)
-        Map<String, Object> commonJson = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("https")
-                        .host("apis.data.go.kr")
-                        .path("/B551011/KorService2/detailCommon2")
-                        .queryParam("ServiceKey", secretKey)
-                        .queryParam("contentId", id)
-                        .queryParam("MobileOS", "WEB")
-                        .queryParam("MobileApp", "TRAVELHUB")
-                        .queryParam("_type", "json")
-                        .build())
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+        Map<String, Object> commonItem = detailCommon(id);
 
-        Map<String, Object> commonResponse = (Map<String, Object>) commonJson.get("response");
-        Map<String, Object> commonBody = (Map<String, Object>) commonResponse.get("body");
-        Map<String, Object> commonItems = (Map<String, Object>) commonBody.get("items");
-        List<Map<String, Object>> commonItemList = (List<Map<String, Object>>) commonItems.get("item");
-        Map<String, Object> commonItem = commonItemList.get(0);
-
-        System.out.println(commonItem);
-        apiType = Integer.parseInt(commonItem.get("contenttypeid").toString());
-        System.out.println(apiType);
+                apiType = Integer.parseInt(commonItem.get("contenttypeid").toString());
         // ✅ 2️⃣ detailIntro2 (부가정보 - 운영시간, 휴무일 등)
         Map<String, Object> introJson = webClient.get()
                 .uri(uriBuilder -> uriBuilder
@@ -67,14 +51,6 @@ public class TourAPIService {
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block();
-
-        System.out.println();
-        System.out.println();
-        System.out.println();
-        System.out.println(introJson);
-        System.out.println();
-        System.out.println();
-        System.out.println();
 
         Map<String, Object> introResponse = (Map<String, Object>) introJson.get("response");
         Map<String, Object> introBody = (Map<String, Object>) introResponse.get("body");
@@ -150,6 +126,48 @@ public class TourAPIService {
         return decoded.replaceAll("<[^>]*>", "").trim();
     }
 
+    public List<TourAPIResponse> findSpotByIdList(List<Long> apiSpotIds) {
+        return apiSpotIds.stream()
+                .map(this::detailCommon)
+                .filter(Objects::nonNull)
+                .map(map -> {
+                    map.put("address", map.remove("addr1")); // ✅ key 이름 변경
+                    map.put("description", map.remove("overview"));
+                    map.put("firstImage", map.remove("firstimage"));
+                    map.put("firstImage2", map.remove("firstimage2"));
+                    return map;
+                })
+                .map(map -> objectMapper.convertValue(map, TourAPIResponse.class))
+                .peek(res -> res.setHomepage(cleanHomepage(res.getHomepage())))
+                .toList();
+    }
+
+
+
+    private Map<String, Object> detailCommon(Long id){
+        // ✅ 1️⃣ detailCommon2 (기본정보)
+        Map<String, Object> commonJson = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("apis.data.go.kr")
+                        .path("/B551011/KorService2/detailCommon2")
+                        .queryParam("ServiceKey", secretKey)
+                        .queryParam("contentId", id)
+                        .queryParam("MobileOS", "WEB")
+                        .queryParam("MobileApp", "TRAVELHUB")
+                        .queryParam("_type", "json")
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        Map<String, Object> commonResponse = (Map<String, Object>) commonJson.get("response");
+        Map<String, Object> commonBody = (Map<String, Object>) commonResponse.get("body");
+        Map<String, Object> commonItems = (Map<String, Object>) commonBody.get("items");
+        List<Map<String, Object>> commonItemList = (List<Map<String, Object>>) commonItems.get("item");
+
+        return commonItemList.get(0);
+    }
 }
 
 

@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/spot")
@@ -22,4 +24,8 @@ public class SpotController {
         return ResponseEntity.ok(spotService.getSpotById(spot_id));
     }
 
+    @GetMapping("/fameSpot")
+    public ResponseEntity<List<SpotResponse>> getFameSpot() {
+        return ResponseEntity.ok(spotService.getFameSpot());
+    }
 }
