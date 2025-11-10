@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -150,6 +151,60 @@ public class TourAPIService {
         return decoded.replaceAll("<[^>]*>", "").trim();
     }
 
+    /**
+     * 검색 기능: keyword로 관광지 목록 조회
+     */
+    public List<TourAPIResponse> searchSpots(String keyword) {
+
+        Map<String, Object> searchJson = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("apis.data.go.kr")
+                        .path("/B551011/KorService2/searchKeyword2")
+                        .queryParam("ServiceKey", secretKey)
+                        .queryParam("pageNo", 1)
+                        .queryParam("numOfRows", 20)
+                        .queryParam("MobileOS", "WEB")
+                        .queryParam("MobileApp", "TRAVELHUB")
+                        .queryParam("_type", "json")
+                        .queryParam("keyword", keyword)
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        List<TourAPIResponse> resultList = new ArrayList<>();
+        if (searchJson == null) return resultList;
+
+        Map<String, Object> response = (Map<String, Object>) searchJson.get("response");
+        Map<String, Object> body = (Map<String, Object>) response.get("body");
+        Map<String, Object> items = (Map<String, Object>) body.get("items");
+
+        if (items == null) return resultList;
+
+        Object itemObj = items.get("item");
+        List<Map<String, Object>> itemList = new ArrayList<>();
+
+        if (itemObj instanceof List) {
+            itemList = (List<Map<String, Object>>) itemObj;
+        } else if (itemObj instanceof Map) {
+            itemList.add((Map<String, Object>) itemObj);
+        }
+
+        for (Map<String, Object> item : itemList) {
+            TourAPIResponse dto = TourAPIResponse.builder()
+                    .title((String) item.get("title"))
+                    .apiType(item.get("contenttypeid") != null ? Integer.parseInt(item.get("contenttypeid").toString()) : null)
+                    .address((String) item.get("addr1"))
+                    .firstImage((String) item.get("firstimage"))
+                    .mapx(item.get("mapx") != null ? Double.parseDouble(item.get("mapx").toString()) : null)
+                    .mapy(item.get("mapy") != null ? Double.parseDouble(item.get("mapy").toString()) : null)
+                    .build();
+            resultList.add(dto);
+        }
+
+        return resultList;
+    }
 }
 
 
