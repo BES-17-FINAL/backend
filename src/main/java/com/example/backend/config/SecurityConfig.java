@@ -44,7 +44,7 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/api/spot/**").permitAll()
+                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/api/spot/**", "/api/festival/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
