@@ -1,4 +1,7 @@
 spring:
+  main:
+    web-application-type: servlet
+
   datasource:
     url: jdbc:postgresql://localhost:5432/travelhub
     username: postgres
@@ -12,7 +15,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
- 
+
   security:
     oauth2:
       client:
@@ -33,7 +36,12 @@ spring:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
             scope: user:email
-
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id  # ✅ 카카오의 사용자 ID 필드명
 
 server:
   port: 8080
