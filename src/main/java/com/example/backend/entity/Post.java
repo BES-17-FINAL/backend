@@ -1,6 +1,7 @@
 package com.example.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.OrderBy;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -53,6 +54,11 @@ public class Post {
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @OrderBy("sortOrder ASC")
+    private List<PostImage> images = new ArrayList<>();
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -79,6 +85,15 @@ public class Post {
 
     public void addComment(Comment comment) {
         this.comments.add(comment);
+    }
+
+    public void clearImages() {
+        this.images.clear();
+    }
+
+    public void addImage(PostImage image) {
+        image.setPost(this);
+        this.images.add(image);
     }
 
     public void increaseViewCount() {

@@ -26,9 +26,9 @@ public class PostController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createPost(
             @RequestPart("post") PostRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+            @RequestPart(value = "images", required = false) MultipartFile[] imageFiles) {
 
-        PostResponse response = postService.createPost(request, imageFile);
+        PostResponse response = postService.createPost(request, imageFiles);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -67,10 +67,10 @@ public class PostController {
     @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long postId,
-            @RequestPart("post") PostRequest request,  // 수정
-            @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+            @RequestPart("post") PostRequest request,
+            @RequestPart(value = "images", required = false) MultipartFile[] imageFiles) {
 
-        PostResponse response = postService.updatePost(postId, request, imageFile);
+        PostResponse response = postService.updatePost(postId, request, imageFiles);
 
         return ResponseEntity.ok(response);
     }

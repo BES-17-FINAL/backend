@@ -1,11 +1,13 @@
 package com.example.backend.service;
 
+import com.example.backend.dto.PostImageResponse;
 import com.example.backend.dto.PostRequest;
 import com.example.backend.dto.PostResponse;
 import com.example.backend.dto.PostSearchType;
 import com.example.backend.dto.PostSortType;
 import com.example.backend.entity.Post;
 import com.example.backend.entity.PostCategory;
+import com.example.backend.entity.PostImage;
 import com.example.backend.entity.PostLike;
 import com.example.backend.entity.User;
 import com.example.backend.exception.ResourceNotFoundException;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -42,21 +45,18 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final FileUploadService fileUploadService;
 
-    public PostResponse createPost(PostRequest request, MultipartFile imageFile) {
+    public PostResponse createPost(PostRequest request, MultipartFile[] imageFiles) {
         User currentUser = getCurrentUserFromContext();
-
-        String imageUrl = null;
-        if (imageFile != null && !imageFile.isEmpty()) {
-            imageUrl = fileUploadService.uploadImage(imageFile);
-        }
 
         Post post = Post.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
                 .user(currentUser)
                 .category(request.getCategory())
-                .imageUrl(imageUrl)
+                .imageUrl(null)
                 .build();
+
+        applyImages(post, imageFiles, request.getThumbnailIndex(), true);
 
         post = postRepository.save(post);
         return mapToPostResponse(post, currentUser);
@@ -130,7 +130,7 @@ public class PostService {
         return mapToPostResponse(post, currentUser);
     }
 
-    public PostResponse updatePost(Long postId, PostRequest request, MultipartFile imageFile) {
+    public PostResponse updatePost(Long postId, PostRequest request, MultipartFile[] imageFiles) {
         User currentUser = getCurrentUserFromContext();
 
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
@@ -146,13 +146,7 @@ public class PostService {
                 request.getCategory()
         );
 
-        if (imageFile != null && !imageFile.isEmpty()) {
-            if (post.getImageUrl() != null) {
-                fileUploadService.deleteImage(post.getImageUrl());
-            }
-            String newImageUrl = fileUploadService.uploadImage(imageFile);
-            post.updateImageUrl(newImageUrl);
-        }
+        applyImages(post, imageFiles, request.getThumbnailIndex(), false);
 
         return mapToPostResponse(post, currentUser);
     }
@@ -208,6 +202,23 @@ public class PostService {
         response.setCommentCount(commentCount != null ? commentCount : 0L);
         response.setLikeCount(likeCount != null ? likeCount : 0L);
 
+        List<PostImageResponse> imageResponses = post.getImages().stream()
+                .sorted(Comparator.comparing(PostImage::getSortOrder, Comparator.nullsLast(Integer::compareTo)))
+                .map(image -> PostImageResponse.builder()
+                        .imageUrl(image.getImageUrl())
+                        .thumbnail(image.isThumbnail())
+                        .sortOrder(image.getSortOrder())
+                        .build())
+                .collect(Collectors.toList());
+        response.setImages(imageResponses);
+
+        String thumbnailUrl = imageResponses.stream()
+                .filter(PostImageResponse::isThumbnail)
+                .map(PostImageResponse::getImageUrl)
+                .findFirst()
+                .orElse(response.getImageUrl());
+        response.setThumbnailUrl(thumbnailUrl);
+
         return response;
     }
 
@@ -255,6 +266,59 @@ public class PostService {
                             .thenComparing(Post::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()));
             case LATEST -> Comparator.comparing(Post::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed();
         };
+    }
+
+    private void applyImages(Post post, MultipartFile[] imageFiles, Integer thumbnailIndex, boolean isNewPost) {
+        boolean hasNewImages = imageFiles != null && imageFiles.length > 0;
+
+        if (!isNewPost && hasNewImages) {
+            List<PostImage> existingImages = new ArrayList<>(post.getImages());
+            for (PostImage image : existingImages) {
+                fileUploadService.deleteImage(image.getImageUrl());
+            }
+            post.clearImages();
+        }
+
+        if (hasNewImages) {
+            int order = 0;
+            for (MultipartFile imageFile : imageFiles) {
+                if (imageFile == null || imageFile.isEmpty()) {
+                    continue;
+                }
+                String uploadedUrl = fileUploadService.uploadImage(imageFile);
+                PostImage image = PostImage.builder()
+                        .imageUrl(uploadedUrl)
+                        .isThumbnail(false)
+                        .sortOrder(order)
+                        .build();
+                post.addImage(image);
+                order++;
+            }
+        }
+
+        updateThumbnail(post, thumbnailIndex);
+    }
+
+    private void updateThumbnail(Post post, Integer thumbnailIndex) {
+        if (post.getImages().isEmpty()) {
+            return;
+        }
+
+        List<PostImage> orderedImages = post.getImages().stream()
+                .sorted(Comparator.comparing(PostImage::getSortOrder, Comparator.nullsLast(Integer::compareTo)))
+                .collect(Collectors.toList());
+
+        int index = (thumbnailIndex != null) ? thumbnailIndex : 0;
+        if (index < 0 || index >= orderedImages.size()) {
+            index = 0;
+        }
+
+        for (PostImage image : orderedImages) {
+            image.setThumbnail(false);
+        }
+        PostImage thumbnailImage = orderedImages.get(index);
+        thumbnailImage.setThumbnail(true);
+        post.updateImageUrl(thumbnailImage.getImageUrl());
     }
 
     private User getCurrentUserFromContext() {
