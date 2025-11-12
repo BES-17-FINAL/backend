@@ -27,6 +27,7 @@ public class PostResponse {
     private boolean isLiked = false;
     private Long commentCount = 0L;
     private String imageUrl;
+    private Long viewCount = 0L;
 
     public static PostResponse fromEntity(Post post) {
         PostResponse response = new PostResponse();
@@ -38,6 +39,7 @@ public class PostResponse {
         response.setCategory(post.getCategory());
 
         response.setImageUrl(post.getImageUrl());
+        response.setViewCount(post.getViewCount());
 
         if (post.getUser() != null) {
             User user = post.getUser();

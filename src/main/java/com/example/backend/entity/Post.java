@@ -12,7 +12,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import com.example.backend.entity.PostCategory;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -46,6 +45,10 @@ public class Post {
     @Column(name = "image_url", length = 512)
     private String imageUrl;
 
+    @Builder.Default
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount = 0L;
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
@@ -76,6 +79,13 @@ public class Post {
 
     public void addComment(Comment comment) {
         this.comments.add(comment);
+    }
+
+    public void increaseViewCount() {
+        if (this.viewCount == null) {
+            this.viewCount = 0L;
+        }
+        this.viewCount += 1;
     }
 
 }
