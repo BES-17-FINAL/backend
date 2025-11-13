@@ -1,6 +1,6 @@
 spring:
   main:
-    web-application-type: servlet 
+    web-application-type: servlet
 
   datasource:
     url: jdbc:postgresql://localhost:5432/travelhub
@@ -15,7 +15,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
- 
+
   security:
     oauth2:
       client:
@@ -44,7 +44,11 @@ spring:
             user-name-attribute: id  # ✅ 카카오의 사용자 ID 필드명
 
 server:
+<<<<<<< HEAD
   port: 8080
 
 tourism:
   serviceKey: f5a8521bb211c810506b8a77a05b76eda4ac1e7ca90207f4e6164553c05792a5
+=======
+  port: 8080
+>>>>>>> origin/main

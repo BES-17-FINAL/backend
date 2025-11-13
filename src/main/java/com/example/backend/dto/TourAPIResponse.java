@@ -24,4 +24,6 @@ public class TourAPIResponse {
     private double mapy;
     private String useTime;
     private String restDate;
+
+
 }

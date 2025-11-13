@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AttractionReviewRequestDto {
+public class SpotReviewRequestDto {
     private int rating;
     private String comment;
 }
