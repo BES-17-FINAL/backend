@@ -1,3 +1,4 @@
+// SearchService.java
 package com.example.backend.service;
 
 import com.example.backend.dto.TourAPIResponse;
@@ -15,6 +16,7 @@ public class SearchService {
 
     private final WebClient webClient = WebClient.builder().build();
 
+    // 지역명 -> areaCode 매핑
     private static final Map<String, Integer> REGION_CODE_MAP = Map.ofEntries(
             Map.entry("서울", 1),
             Map.entry("부산", 6),
@@ -35,18 +37,14 @@ public class SearchService {
             Map.entry("제주", 39)
     );
 
-    /**
-     * @param keyword 검색어 (예: 서울)
-     * @param contentTypeId 관광지 타입 (예: 12=관광지, 14=문화시설, 39=음식점)
-     */
     public List<TourAPIResponse> searchSpots(String keyword, Integer contentTypeId) {
-        Integer areaCode = REGION_CODE_MAP.get(keyword); // keyword → areaCode 매핑
+        Integer areaCode = REGION_CODE_MAP.get(keyword);
 
         Map<String, Object> searchJson = webClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder.scheme("https")
                             .host("apis.data.go.kr")
-                            .path("/B551011/KorService2/areaBasedList2") // 지역 기반 조회
+                            .path("/B551011/KorService2/areaBasedList2")
                             .queryParam("ServiceKey", secretKey)
                             .queryParam("MobileOS", "WEB")
                             .queryParam("MobileApp", "TRAVELHUB")
