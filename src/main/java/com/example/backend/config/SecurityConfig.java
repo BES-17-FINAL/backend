@@ -49,6 +49,7 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth -> oauth
+                        .loginPage("/auth/login")
                         .defaultSuccessUrl("/oauth/success", true)
                 );
         return http.build();

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -167,6 +168,44 @@ public class TourAPIService {
         List<Map<String, Object>> commonItemList = (List<Map<String, Object>>) commonItems.get("item");
 
         return commonItemList.get(0);
+    }
+
+    public List<Map<String, Object>> getcnctrRate(Long id){
+        System.out.println(id);
+        Map<String, Object> common = detailCommon(id);
+
+        String title = (String) common.get("title");
+        int lDongRegnCd = Integer.parseInt((String) common.get("lDongRegnCd"));
+        int lDongSignguCd = Integer.parseInt((String) common.get("lDongSignguCd"));
+
+        Map<String, Object> commonJson = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("apis.data.go.kr")
+                        .path("/B551011/TatsCnctrRateService/tatsCnctrRatedList")
+                        .queryParam("ServiceKey", secretKey)
+                        .queryParam("MobileOS", "WEB")
+                        .queryParam("MobileApp", "TRAVELHUB")
+                        .queryParam("_type", "json")
+                        .queryParam("numOfRows", 30)
+                        .queryParam("areaCd", lDongRegnCd)
+                        .queryParam("signguCd", lDongRegnCd + "" + lDongSignguCd)
+                        .queryParam("tAtsNm", title)
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        Map<String, Object> commonResponse = (Map<String, Object>) commonJson.get("response");
+        Map<String, Object> commonBody = (Map<String, Object>) commonResponse.get("body");
+        Object itemsObj = commonBody.get("items");
+        if (!(itemsObj instanceof Map)) {
+            return new ArrayList<>(); // Map이 아니면 빈 리스트 반환
+        }
+        Map<String, Object> commonItems = (Map<String, Object>) commonBody.get("items");
+        List<Map<String, Object>> commonItemList = (List<Map<String, Object>>) commonItems.get("item");
+
+        return commonItemList;
     }
 }
 

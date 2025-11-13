@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.dto.CnctrRateResponse;
 import com.example.backend.dto.SpotResponse;
 import com.example.backend.dto.TourAPIResponse;
 import com.example.backend.entity.Spot;
@@ -9,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,5 +45,23 @@ public class SpotService {
         }
 
         return spotResponses;
+    }
+
+    public List<CnctrRateResponse> getCnctrRate(Long spotId) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        Spot spot = spotRepository.findById(spotId)
+                .orElseThrow(() -> new RuntimeException("관광지 및 축제를 찾을 수 없습니다."));
+        List<Map<String, Object>> cncts = tourAPIService.getcnctrRate(spot.getApiSpotId());
+        List<CnctrRateResponse> cnctrRateResponseList = new ArrayList<>();
+        for(Map<String, Object> item : cncts){
+            LocalDate date = LocalDate.parse(item.get("baseYmd").toString(), formatter);
+            CnctrRateResponse cnctrRateResponse = CnctrRateResponse.builder()
+                    .cnctrRate(Float.parseFloat(item.get("cnctrRate").toString()))
+                    .baseYmd(date)
+                    .build();
+        }
+
+        return cnctrRateResponseList;
     }
 }
