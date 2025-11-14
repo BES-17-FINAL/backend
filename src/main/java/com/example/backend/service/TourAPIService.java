@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -106,6 +107,15 @@ public class TourAPIService {
         String useTime = getString(introItem, "usetime"); // 운영시간
         String restDate = getString(introItem, "restdate"); // 쉬는날
 
+
+        // ✅ 축제/행사 기간 (예: eventstartdate, eventenddate - yyyymmdd 형식)
+        String eventStartRaw = getString(introItem, "eventstartdate");
+        String eventEndRaw   = getString(introItem, "eventenddate");
+
+        // "20251101" -> LocalDateTime(2025-11-01T00:00:00) 정도로 파싱
+        java.time.LocalDateTime startAt = parseYyyyMMddToDateTime(eventStartRaw);
+        java.time.LocalDateTime endAt   = parseYyyyMMddToDateTime(eventEndRaw);
+
         // ✅ DTO 빌드
         return TourAPIResponse.builder()
                 .title(title)
@@ -116,6 +126,8 @@ public class TourAPIService {
                 .firstImage2(firstImage2)
                 .description(overview)
                 .address(addr1)
+                .start_at(startAt)   // ✅ 추가
+                .end_at(endAt)       // ✅ 추가
                 .mapx(mapx)
                 .mapy(mapy)
                 .useTime(useTime)
@@ -150,8 +162,21 @@ public class TourAPIService {
         return decoded.replaceAll("<[^>]*>", "").trim();
     }
 
-}
+    private LocalDateTime parseYyyyMMddToDateTime(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        // 예: "20251101"
+        if (raw.length() != 8) return null;
+        try {
+            int year  = Integer.parseInt(raw.substring(0, 4));
+            int month = Integer.parseInt(raw.substring(4, 6));
+            int day   = Integer.parseInt(raw.substring(6, 8));
+            return LocalDateTime.of(year, month, day, 0, 0);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 
+}
 
 /*
 Map<String, Object> spotJson = webClient.get()
