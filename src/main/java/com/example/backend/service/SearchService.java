@@ -39,12 +39,20 @@ public class SearchService {
 
     public List<TourAPIResponse> searchSpots(String keyword, Integer contentTypeId) {
         Integer areaCode = REGION_CODE_MAP.get(keyword);
+        String apiPath;
+
+        // 지역 코드가 있으면 지역기반 검색, 없으면 키워드 기반 검색
+        if (areaCode != null) {
+            apiPath = "/B551011/KorService2/areaBasedList2";
+        } else {
+            apiPath = "/B551011/KorService2/searchKeyword2";
+        }
 
         Map<String, Object> searchJson = webClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder.scheme("https")
                             .host("apis.data.go.kr")
-                            .path("/B551011/KorService2/areaBasedList2")
+                            .path(apiPath)
                             .queryParam("ServiceKey", secretKey)
                             .queryParam("MobileOS", "WEB")
                             .queryParam("MobileApp", "TRAVELHUB")
@@ -54,6 +62,9 @@ public class SearchService {
 
                     if (contentTypeId != null) uriBuilder.queryParam("contentTypeId", contentTypeId);
                     if (areaCode != null) uriBuilder.queryParam("areaCode", areaCode);
+
+                    // 키워드 기반 검색일 때
+                    if (areaCode == null) uriBuilder.queryParam("keyword", keyword);
 
                     return uriBuilder.build();
                 })
