@@ -44,11 +44,7 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-<<<<<<< HEAD
-                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/api/spot/**", "/api/area-based/**", "/api/search/**").permitAll()
-=======
-                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/api/spot/**", "/api/kakao-map/**").permitAll()
->>>>>>> origin/main
+                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/api/spot/**", "/api/area-based/**", "/api/search/**", "/api/kakao-map/**", "/api/festival/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
