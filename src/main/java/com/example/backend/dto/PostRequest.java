@@ -15,4 +15,7 @@ public class PostRequest {
     private String content;
 
     private PostCategory category;
+
+    //썸네일 인덱스
+    private Integer thumbnailIndex;
 }

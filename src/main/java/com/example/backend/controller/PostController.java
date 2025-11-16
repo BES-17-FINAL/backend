@@ -2,6 +2,9 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.PostRequest;
 import com.example.backend.dto.PostResponse;
+import com.example.backend.dto.PostSearchType;
+import com.example.backend.dto.PostSortType;
+import com.example.backend.entity.PostCategory;
 import com.example.backend.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,20 +26,24 @@ public class PostController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createPost(
             @RequestPart("post") PostRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+            @RequestPart(value = "images", required = false) MultipartFile[] imageFiles) {
 
-        PostResponse response = postService.createPost(request, imageFile);
+        PostResponse response = postService.createPost(request, imageFiles);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     public ResponseEntity<Page<PostResponse>> getAllPosts(
-
-            @PageableDefault(size = 10, sort = "createdAt,desc") Pageable pageable
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) PostCategory category,
+            @RequestParam(required = false, defaultValue = "TITLE_CONTENT") String searchType,
+            @RequestParam(required = false, defaultValue = "LATEST") String sortType,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        Page<PostResponse> responsePage = postService.getAllPosts(pageable);
-
+        PostSearchType parsedSearchType = PostSearchType.fromValue(searchType);
+        PostSortType parsedSortType = PostSortType.fromValue(sortType);
+        Page<PostResponse> responsePage = postService.getAllPosts(keyword, parsedSearchType, category, parsedSortType, pageable);
         return ResponseEntity.ok(responsePage);
     }
 
@@ -60,10 +67,10 @@ public class PostController {
     @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long postId,
-            @RequestPart("post") PostRequest request,  // 수정
-            @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+            @RequestPart("post") PostRequest request,
+            @RequestPart(value = "images", required = false) MultipartFile[] imageFiles) {
 
-        PostResponse response = postService.updatePost(postId, request, imageFile);
+        PostResponse response = postService.updatePost(postId, request, imageFiles);
 
         return ResponseEntity.ok(response);
     }

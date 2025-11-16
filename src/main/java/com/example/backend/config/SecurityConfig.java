@@ -44,11 +44,12 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/api/spot/**", "/api/festival/**").permitAll()
+                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/api/spot/**", "/api/area-based/**", "/api/search/**", "/api/kakao-map/**", "/api/festival/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth -> oauth
+                        .loginPage("/auth/login")
                         .defaultSuccessUrl("/oauth/success", true)
                 );
         return http.build();

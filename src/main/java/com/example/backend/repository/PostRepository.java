@@ -24,6 +24,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     Page<Post> findByUserNicknameContainingAndDeletedAtIsNull(String nickname, Pageable pageable);
     Page<Post> findByTitleContainingAndDeletedAtIsNull(String title, Pageable pageable);
+    Page<Post> findByContentContainingAndDeletedAtIsNull(String content, Pageable pageable);
     @Query("SELECT p FROM Post p WHERE p.deletedAt IS NULL AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%)")
     Page<Post> findByTitleOrContentContainingAndDeletedAtIsNull(@Param("keyword") String keyword, Pageable pageable);
 
@@ -36,6 +37,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findByCategoryAndTitleContainingAndDeletedAtIsNull(
             PostCategory category,
             String title,
+            Pageable pageable
+    );
+    Page<Post> findByCategoryAndContentContainingAndDeletedAtIsNull(
+            PostCategory category,
+            String content,
             Pageable pageable
     );
     Page<Post> findByCategoryAndUserNicknameContainingAndDeletedAtIsNull(

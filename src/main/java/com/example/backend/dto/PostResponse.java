@@ -1,13 +1,15 @@
 package com.example.backend.dto;
 
 import com.example.backend.entity.Post;
-import com.example.backend.entity.User;
 import com.example.backend.entity.PostCategory;
+import com.example.backend.entity.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,6 +29,10 @@ public class PostResponse {
     private boolean isLiked = false;
     private Long commentCount = 0L;
     private String imageUrl;
+    private Long viewCount = 0L;
+
+    private List<PostImageResponse> images = new ArrayList<>();
+    private String thumbnailUrl;
 
     public static PostResponse fromEntity(Post post) {
         PostResponse response = new PostResponse();
@@ -38,6 +44,7 @@ public class PostResponse {
         response.setCategory(post.getCategory());
 
         response.setImageUrl(post.getImageUrl());
+        response.setViewCount(post.getViewCount());
 
         if (post.getUser() != null) {
             User user = post.getUser();
