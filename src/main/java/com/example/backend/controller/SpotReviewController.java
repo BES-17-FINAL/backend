@@ -45,4 +45,12 @@ public class SpotReviewController {
     ) {
         return ResponseEntity.ok(reviewService.getAverageRating(spotId));
     }
+
+    @GetMapping("/reviews/my")
+    public ResponseEntity<List<SpotReviewResponseDto>> getMyReviews(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        Long userId = user.getUserId();
+
+        return ResponseEntity.ok(reviewService.getMyReviews(userId));
+    }
 }
