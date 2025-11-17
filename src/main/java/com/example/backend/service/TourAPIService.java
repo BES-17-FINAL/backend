@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -280,30 +281,4 @@ public class TourAPIService {
         return commonItemList;
     }
 
-    // ---------- 🔧 유틸 ----------
-    private Double parseDouble(Object value) {
-        if (value == null) return null;
-        try {
-            return Double.parseDouble(value.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private String getString(Map<String, Object> map, String key) {
-        if (map == null || map.get(key) == null) return null;
-        return map.get(key).toString();
-    }
-
-    private String cleanHomepage(String raw) {
-        if (raw == null) return null;
-        String decoded = raw
-                .replace("&lt;", "<")
-                .replace("&gt;", ">")
-                .replace("&quot;", "\"");
-        Pattern pattern = Pattern.compile("href=\\\"(.*?)\\\"");
-        Matcher matcher = pattern.matcher(decoded);
-        if (matcher.find()) return matcher.group(1);
-        return decoded.replaceAll("<[^>]*>", "").trim();
-    }
 }

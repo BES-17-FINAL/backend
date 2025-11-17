@@ -17,6 +17,7 @@ public class OAuthService {
     private final JwtUtil jwtUtil;
 
     public String processOAuthLogin(OAuth2User oAuthUser, String provider) {
+        System.out.println("OAuth provider: " + provider);
         Map<String, Object> attributes = oAuthUser.getAttributes();
 
         String email;
@@ -28,8 +29,8 @@ public class OAuthService {
                 name = (String) attributes.get("name");
             }
             case "github" -> {
-                email = (String) attributes.get("email");
                 name = (String) attributes.get("login");
+                email = name + "@github-user.com";
             }
             case "kakao" -> {
                 Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
@@ -41,7 +42,6 @@ public class OAuthService {
             }
             default -> throw new RuntimeException("지원하지 않는 OAuth 제공자: " + provider);
         }
-
         if (email == null) throw new RuntimeException("OAuth 로그인 중 이메일 정보를 가져올 수 없습니다.");
 
         User user = userRepository.findByEmail(email)
