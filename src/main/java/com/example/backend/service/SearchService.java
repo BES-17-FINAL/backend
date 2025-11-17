@@ -103,4 +103,48 @@ public class SearchService {
 
         return resultList;
     }
+
+    // 상세조회 메서드 추가 -> 검색 결과에서 세부 정보 확인
+    public Map<String, Object> getSpotDetail(Long contentId, Integer contentTypeId) {
+        // detailCommon
+        Map<String, Object> commonJson = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("apis.data.go.kr")
+                        .path("/B551011/KorService2/detailCommon2")
+                        .queryParam("ServiceKey", secretKey)
+                        .queryParam("MobileOS", "WEB")
+                        .queryParam("MobileApp", "TRAVELHUB")
+                        .queryParam("_type", "json")
+                        .queryParam("contentId", contentId)
+                        .queryParam("contentTypeId", contentTypeId)
+                        .queryParam("overviewYN", "Y")
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        // detailIntro
+        Map<String, Object> introJson = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("apis.data.go.kr")
+                        .path("/B551011/KorService2/detailIntro2")
+                        .queryParam("ServiceKey", secretKey)
+                        .queryParam("MobileOS", "WEB")
+                        .queryParam("MobileApp", "TRAVELHUB")
+                        .queryParam("_type", "json")
+                        .queryParam("contentId", contentId)
+                        .queryParam("contentTypeId", contentTypeId)
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("common", commonJson);
+        result.put("intro", introJson);
+        return result;
+    }
+
 }
