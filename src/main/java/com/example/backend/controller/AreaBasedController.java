@@ -9,9 +9,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
-
 @RestController
-@CrossOrigin(origins = "http://localhost:5173") // React 개발 서버
+@CrossOrigin(origins = "http://localhost:5173")
 public class AreaBasedController {
 
     @Value("${tourism.serviceKey}")
@@ -21,17 +20,20 @@ public class AreaBasedController {
 
     @GetMapping("/api/area-based")
     public ResponseEntity<String> getAreaBased(
-            @RequestParam(defaultValue = "39") String contentTypeId,
-            @RequestParam(defaultValue = "100") String numOfRows,
+            @RequestParam(defaultValue = "1") String areaCode,             // ⭐ 지역 코드 추가
+            @RequestParam(defaultValue = "12") String contentTypeId,      // 관광지로 기본 설정
+            @RequestParam(defaultValue = "12") String numOfRows,
             @RequestParam(defaultValue = "1") String pageNo
     ) {
         try {
-            String apiUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/areaBasedList2")
+            String apiUrl = UriComponentsBuilder.fromHttpUrl(
+                            "https://apis.data.go.kr/B551011/KorService2/areaBasedList2")
                     .queryParam("ServiceKey", serviceKey)
                     .queryParam("MobileOS", "ETC")
                     .queryParam("MobileApp", "TEST")
                     .queryParam("_type", "json")
-                    .queryParam("contentTypeId", contentTypeId)
+                    .queryParam("areaCode", areaCode)              // ⭐ 지역반영
+                    .queryParam("contentTypeId", contentTypeId)    // 관광지, 음식점 등
                     .queryParam("numOfRows", numOfRows)
                     .queryParam("pageNo", pageNo)
                     .toUriString();
@@ -40,7 +42,8 @@ public class AreaBasedController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("{\"error\":\"" + e.getMessage() + "\"}");
+            return ResponseEntity.status(500)
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
 }
