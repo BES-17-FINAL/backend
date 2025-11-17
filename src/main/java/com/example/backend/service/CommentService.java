@@ -19,7 +19,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -44,12 +46,25 @@ public class CommentService {
                 .user(currentUser)
                 .build();
 
+        if (request.getParentId() != null) {
+            Comment parentComment = commentRepository.findByIdAndDeletedAtIsNull(request.getParentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("부모 댓글을 찾을 수 없습니다. (ID: " + request.getParentId() + ")"));
+
+            if (!parentComment.getPost().getId().equals(postId)) {
+                throw new UnauthorizedException("부모 댓글이 해당 게시글에 속하지 않습니다.");
+            }
+
+            comment.setParent(parentComment);
+            Long replyCount = commentRepository.countByParentIdAndDeletedAtIsNull(parentComment.getId());
+            comment.setSortOrder(replyCount != null ? replyCount.intValue() : 0);
+        } else {
+            Long topLevelCount = commentRepository.countByPostIdAndParentIsNullAndDeletedAtIsNull(postId);
+            comment.setSortOrder(topLevelCount != null ? topLevelCount.intValue() : 0);
+        }
+
         comment = commentRepository.save(comment);
-        
-        CommentResponse response = CommentResponse.fromEntity(comment);
-        Long likeCount = commentLikeRepository.countByCommentId(comment.getId());
-        response.setLikeCount(likeCount != null ? likeCount.intValue() : 0);
-        response.setLiked(false); 
+
+        CommentResponse response = mapToResponse(comment, currentUser, false);
         return response;
     }
 
@@ -62,19 +77,9 @@ public class CommentService {
             throw new ResourceNotFoundException("게시글을 찾을 수 없습니다. (ID: " + postId + ")");
         }
 
-        Page<Comment> comments = commentRepository.findByPostIdAndDeletedAtIsNull(postId, pageable);
+        Page<Comment> comments = commentRepository.findByPostIdAndParentIsNull(postId, pageable);
 
-        return comments.map(comment -> {
-            boolean isLiked = commentLikeRepository.existsByUserAndComment(currentUser, comment);
-            Long likeCount = commentLikeRepository.countByCommentId(comment.getId());
-
-            CommentResponse response = CommentResponse.fromEntity(comment);
-
-            response.setLiked(isLiked);
-            response.setLikeCount(likeCount != null ? likeCount.intValue() : 0);
-
-            return response;
-        });
+        return comments.map(comment -> mapToResponse(comment, currentUser, true));
     }
 
     public CommentResponse updateComment(Long commentId, CommentRequest request) {
@@ -90,13 +95,7 @@ public class CommentService {
 
         comment.updateText(request.getText());
 
-        CommentResponse response = CommentResponse.fromEntity(comment);
-        boolean isLiked = commentLikeRepository.existsByUserAndComment(currentUser, comment);
-        Long likeCount = commentLikeRepository.countByCommentId(comment.getId());
-        response.setLiked(isLiked);
-        response.setLikeCount(likeCount != null ? likeCount.intValue() : 0);
-        
-        return response;
+        return mapToResponse(comment, currentUser, true);
     }
 
     public void deleteComment(Long commentId) {
@@ -131,6 +130,33 @@ public class CommentService {
                     .build();
             commentLikeRepository.save(newLike);
         }
+    }
+
+    private CommentResponse mapToResponse(Comment comment, User currentUser, boolean includeReplies) {
+        CommentResponse response = CommentResponse.fromEntity(comment);
+
+        boolean isDeleted = comment.getDeletedAt() != null;
+        if (!isDeleted) {
+            boolean isLiked = commentLikeRepository.existsByUserAndComment(currentUser, comment);
+            Long likeCount = commentLikeRepository.countByCommentId(comment.getId());
+            response.setLiked(isLiked);
+            response.setLikeCount(likeCount != null ? likeCount.intValue() : 0);
+        } else {
+            response.setLiked(false);
+            response.setLikeCount(0);
+        }
+
+        if (includeReplies) {
+            List<Comment> childComments = commentRepository.findByParentIdOrderBySortOrderAsc(comment.getId());
+            if (!childComments.isEmpty()) {
+                List<CommentResponse> replyResponses = childComments.stream()
+                        .map(child -> mapToResponse(child, currentUser, true))
+                        .collect(Collectors.toList());
+                response.setReplies(replyResponses);
+            }
+        }
+
+        return response;
     }
 
     private User getCurrentUserFromContext() {

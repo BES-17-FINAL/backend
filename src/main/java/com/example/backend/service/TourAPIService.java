@@ -76,6 +76,16 @@ public class TourAPIService {
         String useTime = getString(introItem, "usetime");
         String restDate = getString(introItem, "restdate");
 
+
+        // ✅ 축제/행사 기간 (예: eventstartdate, eventenddate - yyyymmdd 형식)
+        String eventStartRaw = getString(introItem, "eventstartdate");
+        String eventEndRaw   = getString(introItem, "eventenddate");
+
+        // "20251101" -> LocalDateTime(2025-11-01T00:00:00) 정도로 파싱
+        java.time.LocalDateTime startAt = parseYyyyMMddToDateTime(eventStartRaw);
+        java.time.LocalDateTime endAt   = parseYyyyMMddToDateTime(eventEndRaw);
+
+        // ✅ DTO 빌드
         return TourAPIResponse.builder()
                 .title(title)
                 .apiType(apiType)
@@ -85,6 +95,8 @@ public class TourAPIService {
                 .firstImage2(firstImage2)
                 .description(overview)
                 .address(addr1)
+                .start_at(startAt)   // ✅ 추가
+                .end_at(endAt)       // ✅ 추가
                 .mapx(mapx)
                 .mapy(mapy)
                 .useTime(useTime)
@@ -92,6 +104,46 @@ public class TourAPIService {
                 .build();
     }
 
+    // ---------- 🔧 유틸 ----------
+    private Double parseDouble(Object value) {
+        if (value == null) return null;
+        try {
+            return Double.parseDouble(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String getString(Map<String, Object> map, String key) {
+        if (map == null || map.get(key) == null) return null;
+        return map.get(key).toString();
+    }
+
+    private String cleanHomepage(String raw) {
+        if (raw == null) return null;
+        String decoded = raw
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"");
+        Pattern pattern = Pattern.compile("href=\\\"(.*?)\\\"");
+        Matcher matcher = pattern.matcher(decoded);
+        if (matcher.find()) return matcher.group(1);
+        return decoded.replaceAll("<[^>]*>", "").trim();
+    }
+
+    private LocalDateTime parseYyyyMMddToDateTime(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        // 예: "20251101"
+        if (raw.length() != 8) return null;
+        try {
+            int year  = Integer.parseInt(raw.substring(0, 4));
+            int month = Integer.parseInt(raw.substring(4, 6));
+            int day   = Integer.parseInt(raw.substring(6, 8));
+            return LocalDateTime.of(year, month, day, 0, 0);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
     /**
      * 키워드로 관광지 검색
      */
@@ -144,16 +196,13 @@ public class TourAPIService {
 
         return resultList;
     }
-
-    /**
-     * ID 리스트로 관광지 조회
-     */
+  
     public List<TourAPIResponse> findSpotByIdList(List<Long> apiSpotIds) {
         return apiSpotIds.stream()
                 .map(this::detailCommon)
                 .filter(Objects::nonNull)
                 .map(map -> {
-                    map.put("address", map.remove("addr1"));
+                    map.put("address", map.remove("addr1")); // ✅ key 이름 변경
                     map.put("description", map.remove("overview"));
                     map.put("firstImage", map.remove("firstimage"));
                     map.put("firstImage2", map.remove("firstimage2"));
@@ -164,10 +213,10 @@ public class TourAPIService {
                 .toList();
     }
 
-    /**
-     * 공통 상세 조회
-     */
-    private Map<String, Object> detailCommon(Long id) {
+
+
+    private Map<String, Object> detailCommon(Long id){
+        // ✅ 1️⃣ detailCommon2 (기본정보)
         Map<String, Object> commonJson = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .scheme("https")
@@ -182,7 +231,7 @@ public class TourAPIService {
                 .retrieve()
                 .bodyToMono(Map.class)
                 .block();
-
+      
         Map<String, Object> commonResponse = (Map<String, Object>) commonJson.get("response");
         Map<String, Object> commonBody = (Map<String, Object>) commonResponse.get("body");
         Map<String, Object> commonItems = (Map<String, Object>) commonBody.get("items");
