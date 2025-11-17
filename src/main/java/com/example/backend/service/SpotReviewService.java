@@ -65,6 +65,13 @@ public class SpotReviewService {
                 .average()
                 .orElse(0.0);
 
-        return Math.round(avg * 5.0) / 5.0; // 소수점 1자리 반올림
+        return Math.round(avg * 5.0) / 5.0;
+    }
+
+    @Transactional(readOnly = true)
+    public List<SpotReviewResponseDto> getMyReviews(Long userId) {
+        return reviewRepository.findByUser_UserId(userId).stream()
+                .map(SpotReviewResponseDto::from)
+                .toList();
     }
 }
