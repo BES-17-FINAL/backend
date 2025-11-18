@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class TourAPIResponse {
+    private Long id;          // ← contentid 저장
     private String title;
     private int apiType;
     private String tel;

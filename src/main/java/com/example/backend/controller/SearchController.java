@@ -5,6 +5,7 @@ import com.example.backend.dto.TourAPIResponse;
 import com.example.backend.service.SearchService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.backend.dto.TourAPIDetailResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -29,13 +30,18 @@ public class SearchController {
         return ResponseEntity.ok(result);
     }
 
-    // 📌 상세 조회
-    @GetMapping("/detail")
-    public ResponseEntity<Map<String, Object>> getSpotDetail(
-            @RequestParam Long contentId,
+    // 📌 상세 조회 기능
+    @GetMapping("/{contentId}")
+    public ResponseEntity<TourAPIDetailResponse> getSpotDetail(
+            @PathVariable Long contentId,
             @RequestParam Integer contentTypeId
     ) {
-        Map<String, Object> detail = searchService.getSpotDetail(contentId, contentTypeId);
-        return ResponseEntity.ok(detail);
+        TourAPIDetailResponse detail = searchService.getSpotDetail(contentId, contentTypeId);
+        if (detail != null) {
+            return ResponseEntity.ok(detail);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
+
 }
