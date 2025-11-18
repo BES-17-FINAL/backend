@@ -9,4 +9,6 @@ import java.util.List;
 public interface SpotRepository extends JpaRepository<Spot, Long> {
     @Query("SELECT s FROM Spot s ORDER BY s.receive DESC LIMIT 10")
     List<Spot> findTop10Sopt();
+
+    Spot findByapiSpotId(Long contentId);
 }

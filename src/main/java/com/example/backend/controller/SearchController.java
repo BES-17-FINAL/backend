@@ -1,8 +1,10 @@
 // SearchController.java
 package com.example.backend.controller;
 
+import com.example.backend.dto.SpotResponse;
 import com.example.backend.dto.TourAPIResponse;
 import com.example.backend.service.SearchService;
+import com.example.backend.service.SpotService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.backend.dto.TourAPIDetailResponse;
@@ -15,9 +17,11 @@ import java.util.Map;
 public class SearchController {
 
     private final SearchService searchService;
+    private final SpotService spotService;
 
-    public SearchController(SearchService searchService) {
+    public SearchController(SearchService searchService, SpotService spotService) {
         this.searchService = searchService;
+        this.spotService = spotService;
     }
 
     // 🔍 검색 기능
@@ -32,11 +36,10 @@ public class SearchController {
 
     // 📌 상세 조회 기능
     @GetMapping("/{contentId}")
-    public ResponseEntity<TourAPIDetailResponse> getSpotDetail(
-            @PathVariable Long contentId,
-            @RequestParam Integer contentTypeId
+    public ResponseEntity<SpotResponse> getSpotDetail(
+            @PathVariable Long contentId
     ) {
-        TourAPIDetailResponse detail = searchService.getSpotDetail(contentId, contentTypeId);
+        SpotResponse detail = spotService.getSpotByContentId(contentId);
         if (detail != null) {
             return ResponseEntity.ok(detail);
         } else {
