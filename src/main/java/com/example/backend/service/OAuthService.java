@@ -28,8 +28,8 @@ public class OAuthService {
                 name = (String) attributes.get("name");
             }
             case "github" -> {
-                email = (String) attributes.get("email");
                 name = (String) attributes.get("login");
+                email = name + "@github-user.com";
             }
             case "kakao" -> {
                 Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
