@@ -82,6 +82,15 @@ public class CommentService {
         return comments.map(comment -> mapToResponse(comment, currentUser, true));
     }
 
+    @Transactional(readOnly = true)
+    public Page<CommentResponse> getUserComments(Long userId, Pageable pageable) {
+        User currentUser = getCurrentUserFromContextOptional().orElse(null);
+        
+        Page<Comment> comments = commentRepository.findByUserUserIdAndDeletedAtIsNull(userId, pageable);
+        
+        return comments.map(comment -> mapToResponse(comment, currentUser, false));
+    }
+
     public CommentResponse updateComment(Long commentId, CommentRequest request) {
 
         User currentUser = getCurrentUserFromContext();
@@ -172,6 +181,26 @@ public class CommentService {
             return (User) principal;
         } else {
             throw new ResourceNotFoundException("유저 인증 정보가 올바르지 않습니다. (Principal: " + principal.toString() + ")");
+        }
+    }
+
+    private Optional<User> getCurrentUserFromContextOptional() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal())) {
+                return Optional.empty();
+            }
+
+            Object principal = authentication.getPrincipal();
+
+            if (principal instanceof User) {
+                return Optional.of((User) principal);
+            } else {
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 
