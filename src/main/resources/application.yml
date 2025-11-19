@@ -1,6 +1,6 @@
 spring:
   main:
-    web-application-type: servlet 
+    web-application-type: servlet
 
   datasource:
     url: jdbc:postgresql://localhost:5432/travelhub
@@ -15,7 +15,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
- 
+
   security:
     oauth2:
       client:
@@ -46,4 +46,6 @@ spring:
 server:
   port: 8080
 
-secret_key: ${SECRET_KEY:}
+tourism:
+  serviceKey: f5a8521bb211c810506b8a77a05b76eda4ac1e7ca90207f4e6164553c05792a5
+
