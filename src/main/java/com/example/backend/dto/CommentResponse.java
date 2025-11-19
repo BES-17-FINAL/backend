@@ -22,6 +22,7 @@ public class CommentResponse {
     private Long userId;
     private String nickname;
     private boolean isLiked = false;
+    private Long postId;  // 댓글이 달린 게시글 ID
     private Long parentId;
     private Integer depth;
     private Integer sortOrder;
@@ -47,6 +48,10 @@ public class CommentResponse {
             User user = comment.getUser();
             response.setUserId(user.getUserId());
             response.setNickname(user.getNickname());
+        }
+
+        if (comment.getPost() != null) {
+            response.setPostId(comment.getPost().getId());
         }
 
         return response;
