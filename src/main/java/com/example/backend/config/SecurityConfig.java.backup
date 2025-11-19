@@ -1,0 +1,63 @@
+package com.example.backend.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+@Configuration
+@EnableWebSecurity
+@Order(0) // 최우선 순위
+public class SecurityConfig {
+
+    // 모든 경로에서 Spring Security 완전히 비활성화
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        System.out.println("==========================================");
+        System.out.println("🔧 WebSecurityCustomizer가 로드되었습니다!");
+        System.out.println("🔧 모든 경로에서 Spring Security 필터 완전히 비활성화");
+        System.out.println("==========================================");
+        return (web) -> web.ignoring().anyRequest();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        System.out.println("==========================================");
+        System.out.println("🔧 SecurityFilterChain이 로드되었습니다!");
+        System.out.println("==========================================");
+        
+        http
+            // CSRF 완전히 비활성화
+            .csrf(csrf -> csrf.disable())
+            // CORS 설정
+            .cors(cors -> {})
+            // 세션 생성 정책: STATELESS
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            // 모든 인증 방식 완전히 비활성화
+            .httpBasic(httpBasic -> httpBasic.disable())
+            .formLogin(formLogin -> formLogin.disable())
+            .logout(logout -> logout.disable())
+            // OAuth2 완전히 비활성화
+            .oauth2Login(oauth2 -> oauth2.disable())
+            .oauth2Client(oauth2 -> oauth2.disable())
+            .oauth2ResourceServer(oauth2 -> oauth2.disable())
+            // 모든 요청 허용
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/**").permitAll()
+                .anyRequest().permitAll()
+            );
+        
+        System.out.println("✅ SecurityFilterChain 설정 완료 - 모든 요청 허용");
+        System.out.println("==========================================");
+        
+        return http.build();
+    }
+}
+

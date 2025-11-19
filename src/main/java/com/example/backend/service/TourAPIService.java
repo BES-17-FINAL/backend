@@ -22,7 +22,7 @@ public class TourAPIService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${secret_key}")
+    @Value("${secret_key:}")
     private String secretKey;
 
     private Integer apiType;
