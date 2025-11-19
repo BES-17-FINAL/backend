@@ -31,6 +31,12 @@ public class SpotService {
         return SpotResponse.form(spot, response);
     }
 
+    public SpotResponse getSpotByContentId(Long contentId) {
+        Spot spots = spotRepository.findByapiSpotId(contentId);
+
+        return SpotResponse.form(spots, new TourAPIResponse());
+    }
+
     public List<SpotResponse> getFameSpot() {
         List<Spot> spots = spotRepository.findTop10Sopt();
         List<Long> apiSpotId = spots.stream().map(Spot::getApiSpotId).toList();

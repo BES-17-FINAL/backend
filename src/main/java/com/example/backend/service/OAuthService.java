@@ -17,6 +17,7 @@ public class OAuthService {
     private final JwtUtil jwtUtil;
 
     public String processOAuthLogin(OAuth2User oAuthUser, String provider) {
+        System.out.println("OAuth provider: " + provider);
         Map<String, Object> attributes = oAuthUser.getAttributes();
 
         String email;
@@ -41,7 +42,6 @@ public class OAuthService {
             }
             default -> throw new RuntimeException("지원하지 않는 OAuth 제공자: " + provider);
         }
-
         if (email == null) throw new RuntimeException("OAuth 로그인 중 이메일 정보를 가져올 수 없습니다.");
 
         User user = userRepository.findByEmail(email)

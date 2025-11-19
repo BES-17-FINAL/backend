@@ -20,25 +20,41 @@ public class AreaBasedController {
 
     @GetMapping("/api/area-based")
     public ResponseEntity<String> getAreaBased(
-            @RequestParam(defaultValue = "1") String areaCode,             // ⭐ 지역 코드 추가
-            @RequestParam(defaultValue = "12") String contentTypeId,      // 관광지로 기본 설정
-            @RequestParam(defaultValue = "12") String numOfRows,
+            @RequestParam(required = false) String areaCode,
+            @RequestParam(required = false) String sigunguCode,
+            @RequestParam(required = false) String contentTypeId,
+            @RequestParam(defaultValue = "20") String numOfRows,
             @RequestParam(defaultValue = "1") String pageNo
     ) {
         try {
-            String apiUrl = UriComponentsBuilder.fromHttpUrl(
-                            "https://apis.data.go.kr/B551011/KorService2/areaBasedList2")
+
+            UriComponentsBuilder builder = UriComponentsBuilder
+                    .fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/areaBasedList2")
                     .queryParam("ServiceKey", serviceKey)
                     .queryParam("MobileOS", "ETC")
-                    .queryParam("MobileApp", "TEST")
+                    .queryParam("MobileApp", "TRAVELHUB")
                     .queryParam("_type", "json")
-                    .queryParam("areaCode", areaCode)              // ⭐ 지역반영
-                    .queryParam("contentTypeId", contentTypeId)    // 관광지, 음식점 등
                     .queryParam("numOfRows", numOfRows)
-                    .queryParam("pageNo", pageNo)
-                    .toUriString();
+                    .queryParam("pageNo", pageNo);
 
+            // ⭐ 지역(areaCode) 들어오면 추가
+            if (areaCode != null && !areaCode.isEmpty()) {
+                builder.queryParam("areaCode", areaCode);
+            }
+
+            // ⭐ 시군구(sigunguCode) 들어오면 추가
+            if (sigunguCode != null && !sigunguCode.isEmpty()) {
+                builder.queryParam("sigunguCode", sigunguCode);
+            }
+
+            // ⭐ 콘텐츠 타입(contentTypeId) 들어오면 추가
+            if (contentTypeId != null && !contentTypeId.isEmpty()) {
+                builder.queryParam("contentTypeId", contentTypeId);
+            }
+
+            String apiUrl = builder.toUriString();
             String response = restTemplate.getForObject(apiUrl, String.class);
+
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {

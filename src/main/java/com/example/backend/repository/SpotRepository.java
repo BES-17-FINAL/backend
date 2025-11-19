@@ -25,5 +25,5 @@ public interface SpotRepository extends JpaRepository<Spot, Long> {
 
     List<Spot> findTop10Sopt();
 
-
+    Spot findByapiSpotId(Long contentId);
 }

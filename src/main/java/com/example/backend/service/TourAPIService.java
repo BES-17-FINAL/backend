@@ -280,5 +280,4 @@ public class TourAPIService {
 
         return commonItemList;
     }
-
 }
