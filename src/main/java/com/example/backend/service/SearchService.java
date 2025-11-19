@@ -1,6 +1,7 @@
 // SearchService.java
 package com.example.backend.service;
 
+import com.example.backend.dto.TourAPIDetailResponse;
 import com.example.backend.dto.TourAPIResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -91,6 +92,7 @@ public class SearchService {
 
         for (Map<String, Object> item : itemList) {
             TourAPIResponse dto = TourAPIResponse.builder()
+                    .id(item.get("contentid") != null ? Long.parseLong(item.get("contentid").toString()) : null) // ← 추가
                     .title((String) item.get("title"))
                     .apiType(item.get("contenttypeid") != null ? Integer.parseInt(item.get("contenttypeid").toString()) : null)
                     .address((String) item.get("addr1"))
@@ -103,4 +105,78 @@ public class SearchService {
 
         return resultList;
     }
-}
+
+    // 상세조회 메서드 추가 -> 검색 결과에서 세부 정보 확인
+    public TourAPIDetailResponse getSpotDetail(Long contentId, Integer contentTypeId) {
+        // detailCommon 호출
+        Map<String, Object> commonJson = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("apis.data.go.kr")
+                        .path("/B551011/KorService2/detailCommon2")
+                        .queryParam("ServiceKey", secretKey)
+                        .queryParam("MobileOS", "WEB")
+                        .queryParam("MobileApp", "TRAVELHUB")
+                        .queryParam("_type", "json")
+                        .queryParam("contentId", contentId)
+                        .queryParam("contentTypeId", contentTypeId)
+                        .queryParam("overviewYN", "Y")
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        // detailIntro 호출
+        Map<String, Object> introJson = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("apis.data.go.kr")
+                        .path("/B551011/KorService2/detailIntro2")
+                        .queryParam("ServiceKey", secretKey)
+                        .queryParam("MobileOS", "WEB")
+                        .queryParam("MobileApp", "TRAVELHUB")
+                        .queryParam("_type", "json")
+                        .queryParam("contentId", contentId)
+                        .queryParam("contentTypeId", contentTypeId)
+                        .build())
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block();
+
+        // detailCommon 파싱
+        Map<String, Object> response = (Map<String, Object>) commonJson.get("response");
+        Map<String, Object> body = (Map<String, Object>) response.get("body");
+        Map<String, Object> items = (Map<String, Object>) body.get("items");
+        Object itemObj = items.get("item");
+        Map<String, Object> commonItem;
+        if (itemObj instanceof List) {
+            commonItem = ((List<Map<String, Object>>) itemObj).get(0);
+        } else {
+            commonItem = (Map<String, Object>) itemObj;
+        }
+
+        // detailIntro 파싱
+        Map<String, Object> introResponse = (Map<String, Object>) introJson.get("response");
+        Map<String, Object> introBody = (Map<String, Object>) introResponse.get("body");
+        Map<String, Object> introItems = (Map<String, Object>) introBody.get("items");
+        Object introObj = introItems.get("item");
+        Map<String, Object> introItem;
+        if (introObj instanceof List) {
+            introItem = ((List<Map<String, Object>>) introObj).get(0);
+        } else if (introObj instanceof Map) {
+            introItem = (Map<String, Object>) introObj;
+        } else {
+            introItem = new HashMap<>();
+        }
+
+        return TourAPIDetailResponse.builder()
+                .title((String) commonItem.get("title"))
+                .address((String) commonItem.get("addr1"))
+                .overview((String) commonItem.get("overview"))
+                .firstImage((String) commonItem.get("firstimage"))
+                .mapx(commonItem.get("mapx") != null ? Double.parseDouble(commonItem.get("mapx").toString()) : null)
+                .mapy(commonItem.get("mapy") != null ? Double.parseDouble(commonItem.get("mapy").toString()) : null)
+                .info((String) introItem.get("content")) // detailIntro에서 가져올 추가 정보
+                .build();
+    }
+    }
