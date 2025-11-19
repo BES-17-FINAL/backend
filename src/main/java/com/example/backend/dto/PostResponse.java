@@ -3,6 +3,7 @@ package com.example.backend.dto;
 import com.example.backend.entity.Post;
 import com.example.backend.entity.PostCategory;
 import com.example.backend.entity.User;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,6 +27,7 @@ public class PostResponse {
     private Long userId;
     private String nickname;
     private Long likeCount = 0L;
+    @JsonProperty("isLiked")
     private boolean isLiked = false;
     private Long commentCount = 0L;
     private String imageUrl;

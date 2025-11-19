@@ -64,6 +64,18 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{postId}/view")
+    public ResponseEntity<Void> incrementViewCount(@PathVariable Long postId) {
+        postService.incrementViewCount(postId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{postId}/data")
+    public ResponseEntity<PostResponse> getPostByIdWithoutViewCount(@PathVariable Long postId) {
+        PostResponse response = postService.getPostByIdWithoutViewCount(postId);
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long postId,
