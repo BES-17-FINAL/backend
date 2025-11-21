@@ -102,4 +102,12 @@ public class PostController {
 
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{postId}/bookmark")
+    public ResponseEntity<Void> toggleBookmarkPost(@PathVariable Long postId) {
+
+        postService.toggleBookmarkPost(postId);
+
+        return ResponseEntity.ok().build();
+    }
 }
