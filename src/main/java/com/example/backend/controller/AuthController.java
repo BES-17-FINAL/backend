@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+import com.example.backend.dto.ChangePasswordRequest;
 import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.LoginResponse;
 import com.example.backend.entity.User;
@@ -28,5 +29,14 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
         return ResponseEntity.ok("로그아웃 완료.");
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            @RequestHeader("Authorization") String token
+    ) {
+        authService.changePassword(token, request);
+        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
 }

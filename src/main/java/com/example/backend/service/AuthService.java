@@ -1,10 +1,12 @@
 package com.example.backend.service;
 
+import com.example.backend.dto.ChangePasswordRequest;
 import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.LoginResponse;
 import com.example.backend.entity.User;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.security.JwtUtil;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,4 +39,26 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getEmail());
         return new LoginResponse(token, user.getNickname(), user.getEmail());
     }
+    @Transactional
+    public void changePassword(String token, ChangePasswordRequest request) {
+
+        // Authorization: Bearer XXX → XXX
+        String jwt = token.replace("Bearer ", "");
+
+        // 토큰에서 email 추출
+        String email = jwtUtil.extractEmail(jwt);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 현재 비밀번호 검증
+        if (!encoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 새 비밀번호 암호화 후 저장
+        user.setPassword(encoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
 }
