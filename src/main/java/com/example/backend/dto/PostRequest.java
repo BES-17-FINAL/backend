@@ -21,6 +21,9 @@ public class PostRequest {
     //썸네일 인덱스
     private Integer thumbnailIndex;
     
-    // 삭제할 기존 이미지 URL 목록 (수정 모드에서만 사용)
+    // 삭제할 기존 이미지 URL 목록
     private List<String> deletedImageUrls;
+    
+    // 이미지 순서 정보
+    private List<String> imageOrderUrls;
 }

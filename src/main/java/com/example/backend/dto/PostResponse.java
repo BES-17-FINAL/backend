@@ -21,6 +21,7 @@ public class PostResponse {
     private String title;
     private String content;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     private PostCategory category;
 
@@ -29,6 +30,8 @@ public class PostResponse {
     private Long likeCount = 0L;
     @JsonProperty("isLiked")
     private boolean isLiked = false;
+    @JsonProperty("isBookmarked")
+    private boolean isBookmarked = false;
     private Long commentCount = 0L;
     private String imageUrl;
     private Long viewCount = 0L;
@@ -42,6 +45,7 @@ public class PostResponse {
         response.setTitle(post.getTitle());
         response.setContent(post.getContent());
         response.setCreatedAt(post.getCreatedAt());
+        response.setUpdatedAt(post.getUpdatedAt());
 
         response.setCategory(post.getCategory());
 
