@@ -6,8 +6,17 @@ import com.example.backend.dto.UpdateUserProfileResponse;
 import com.example.backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/user")
@@ -34,5 +43,16 @@ public class UserController {
         Long resolvedId = userService.resolveUserId(userId, email);
         userService.edit(resolvedId, req);
         return new UpdateUserProfileResponse(true);
+    }
+
+    @PutMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> userProfile(
+            @AuthenticationPrincipal(expression = "userId") Long userId,
+            @RequestPart(value = "image")MultipartFile file
+            ) {
+
+        userService.userProfileImage(file,userId);
+
+        return ResponseEntity.noContent().build();
     }
 }
