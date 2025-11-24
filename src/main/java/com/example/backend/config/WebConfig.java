@@ -8,13 +8,20 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${file.upload-dir:uploads/images}")
+    @Value("${file.upload-dir}")
     private String uploadDir;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // /images/** URL로 접근하면 실제 uploads/images 폴더의 파일을 제공
+        String resourceLocation;
+
+        if (uploadDir.startsWith("/")) {
+            resourceLocation = "file:" + uploadDir + "/";
+        } else {
+            resourceLocation = "file:./" + uploadDir + "/";
+        }
+
         registry.addResourceHandler("/images/**")
-                .addResourceLocations("file:" + uploadDir + "/");
+                .addResourceLocations(resourceLocation);
     }
 }

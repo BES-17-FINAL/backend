@@ -147,10 +147,14 @@ public class PostService {
     }
 
     @Transactional
-    public void incrementViewCount(Long postId) {
+    public Long incrementViewCount(Long postId) {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("게시글을 찾을 수 없습니다. (ID: " + postId + ")"));
         post.increaseViewCount();
+        // 명시적으로 저장하여 조회수 증가가 DB에 반영되도록 함
+        postRepository.save(post);
+        log.info("조회수 증가 완료: postId={}, viewCount={}", postId, post.getViewCount());
+        return post.getViewCount();
     }
 
     public PostResponse updatePost(Long postId, PostRequest request, MultipartFile[] imageFiles) {

@@ -16,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/posts")
@@ -65,9 +68,11 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/view")
-    public ResponseEntity<Void> incrementViewCount(@PathVariable Long postId) {
-        postService.incrementViewCount(postId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Map<String, Long>> incrementViewCount(@PathVariable Long postId) {
+        Long newViewCount = postService.incrementViewCount(postId);
+        Map<String, Long> response = new HashMap<>();
+        response.put("viewCount", newViewCount);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{postId}/data")
