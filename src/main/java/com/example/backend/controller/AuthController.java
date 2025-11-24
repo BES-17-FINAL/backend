@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+import com.example.backend.dto.ChangePasswordRequest;
 import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.LoginResponse;
 import com.example.backend.entity.User;
@@ -33,25 +34,12 @@ public class AuthController {
         return ResponseEntity.ok("로그아웃 완료.");
     }
 
-    // 현재 로그인한 유저 정보 반환 (OAuthCallback에서 사용)
-    @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
-        try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(401).body("No token provided");
-            }
-
-            String token = authHeader.substring(7); // "Bearer " 제거
-            if (!authService.validateToken(token)) {
-                return ResponseEntity.status(401).body("Invalid token");
-            }
-
-            String email = authService.getEmailFromToken(token);
-            User user = authService.getUserByEmail(email);
-
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Failed to fetch user: " + e.getMessage());
-        }
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            @RequestHeader("Authorization") String token
+    ) {
+        authService.changePassword(token, request);
+        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
 }
