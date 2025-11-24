@@ -43,6 +43,9 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id  # ✅ 카카오의 사용자 ID 필드명
 
+file:
+  upload-dir: uploads/images
+
 server:
   port: 8080
 

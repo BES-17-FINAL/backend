@@ -16,16 +16,19 @@ public class AuthController {
 
     private final AuthService authService;
 
+    // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody User user) {
         return ResponseEntity.ok(authService.signup(user));
     }
 
+    // 로그인
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    // 로그아웃
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
         return ResponseEntity.ok("로그아웃 완료.");

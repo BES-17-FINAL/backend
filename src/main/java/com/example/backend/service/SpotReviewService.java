@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,6 +49,7 @@ public class SpotReviewService {
     public List<SpotReviewResponseDto> getReviewsBySpot(Long spotId) {
         return reviewRepository.findAll().stream()
                 .filter(r -> r.getSpot().getId().equals(spotId))
+                .sorted(Comparator.comparing(SpotReview::getCreatedAt).reversed())
                 .map(SpotReviewResponseDto::from)
                 .collect(Collectors.toList());
     }

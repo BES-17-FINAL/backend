@@ -21,6 +21,7 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
 
+    // ------------------- 회원가입 -------------------
     public String signup(User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             return "이미 가입된 이메일입니다.";

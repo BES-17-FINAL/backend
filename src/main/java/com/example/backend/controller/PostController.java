@@ -16,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/posts")
@@ -64,6 +67,20 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{postId}/view")
+    public ResponseEntity<Map<String, Long>> incrementViewCount(@PathVariable Long postId) {
+        Long newViewCount = postService.incrementViewCount(postId);
+        Map<String, Long> response = new HashMap<>();
+        response.put("viewCount", newViewCount);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{postId}/data")
+    public ResponseEntity<PostResponse> getPostByIdWithoutViewCount(@PathVariable Long postId) {
+        PostResponse response = postService.getPostByIdWithoutViewCount(postId);
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long postId,
@@ -87,6 +104,14 @@ public class PostController {
     public ResponseEntity<Void> toggleLikePost(@PathVariable Long postId) {
 
         postService.toggleLikePost(postId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{postId}/bookmark")
+    public ResponseEntity<Void> toggleBookmarkPost(@PathVariable Long postId) {
+
+        postService.toggleBookmarkPost(postId);
 
         return ResponseEntity.ok().build();
     }

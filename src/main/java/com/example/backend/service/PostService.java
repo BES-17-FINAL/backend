@@ -6,6 +6,7 @@ import com.example.backend.dto.PostResponse;
 import com.example.backend.dto.PostSearchType;
 import com.example.backend.dto.PostSortType;
 import com.example.backend.entity.Post;
+import com.example.backend.entity.PostBookmark;
 import com.example.backend.entity.PostCategory;
 import com.example.backend.entity.PostImage;
 import com.example.backend.entity.PostLike;
@@ -13,6 +14,7 @@ import com.example.backend.entity.User;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.UnauthorizedException;
 import com.example.backend.repository.CommentRepository;
+import com.example.backend.repository.PostBookmarkRepository;
 import com.example.backend.repository.PostLikeRepository;
 import com.example.backend.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -43,6 +44,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
+    private final PostBookmarkRepository postBookmarkRepository;
     private final FileUploadService fileUploadService;
 
     public PostResponse createPost(PostRequest request, MultipartFile[] imageFiles) {
@@ -56,7 +58,7 @@ public class PostService {
                 .imageUrl(null)
                 .build();
 
-        applyImages(post, imageFiles, request.getThumbnailIndex(), true);
+        applyImages(post, imageFiles, request.getThumbnailIndex(), true, null);
 
         post = postRepository.save(post);
         return mapToPostResponse(post, currentUser);
@@ -125,9 +127,34 @@ public class PostService {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("게시글을 찾을 수 없습니다. (ID: " + postId + ")"));
 
-        post.increaseViewCount();
+        // 조회수 증가는 별도 엔드포인트(/api/posts/{id}/view)에서 처리
+        // getPostById에서는 조회수 증가 없이 데이터만 반환
 
         return mapToPostResponse(post, currentUser);
+    }
+
+    @Transactional(readOnly = true)
+    public PostResponse getPostByIdWithoutViewCount(Long postId) {
+        User currentUser = getCurrentUserFromContextOptional().orElse(null);
+
+        Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("게시글을 찾을 수 없습니다. (ID: " + postId + ")"));
+
+        // 조회수 증가 없이 데이터만 반환
+        Long commentCount = commentRepository.countByPostIdAndDeletedAtIsNull(post.getId());
+        Long likeCount = postLikeRepository.countByPostId(post.getId());
+        return mapToPostResponse(post, currentUser, commentCount, likeCount);
+    }
+
+    @Transactional
+    public Long incrementViewCount(Long postId) {
+        Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("게시글을 찾을 수 없습니다. (ID: " + postId + ")"));
+        post.increaseViewCount();
+        // 명시적으로 저장하여 조회수 증가가 DB에 반영되도록 함
+        postRepository.save(post);
+        log.info("조회수 증가 완료: postId={}, viewCount={}", postId, post.getViewCount());
+        return post.getViewCount();
     }
 
     public PostResponse updatePost(Long postId, PostRequest request, MultipartFile[] imageFiles) {
@@ -146,7 +173,7 @@ public class PostService {
                 request.getCategory()
         );
 
-        applyImages(post, imageFiles, request.getThumbnailIndex(), false);
+        applyImages(post, imageFiles, request.getThumbnailIndex(), false, request.getDeletedImageUrls(), request.getImageOrderUrls());
 
         return mapToPostResponse(post, currentUser);
     }
@@ -188,6 +215,26 @@ public class PostService {
         }
     }
 
+    @Transactional
+    public void toggleBookmarkPost(Long postId) {
+        User currentUser = getCurrentUserFromContext();
+
+        Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("게시글을 찾을 수 없습니다. (ID: " + postId + ")"));
+
+        Optional<PostBookmark> bookmark = postBookmarkRepository.findByUserAndPost(currentUser, post);
+
+        if (bookmark.isPresent()) {
+            postBookmarkRepository.delete(bookmark.get());
+        } else {
+            PostBookmark newBookmark = PostBookmark.builder()
+                    .user(currentUser)
+                    .post(post)
+                    .build();
+            postBookmarkRepository.save(newBookmark);
+        }
+    }
+
     private PostResponse mapToPostResponse(Post post, User currentUser) {
         Long commentCount = commentRepository.countByPostIdAndDeletedAtIsNull(post.getId());
         Long likeCount = postLikeRepository.countByPostId(post.getId());
@@ -195,10 +242,13 @@ public class PostService {
     }
 
     private PostResponse mapToPostResponse(Post post, User currentUser, Long commentCount, Long likeCount) {
-        boolean isLiked = postLikeRepository.existsByUserAndPost(currentUser, post);
+        // currentUser가 null이면 좋아요/북마크 상태는 false
+        boolean isLiked = currentUser != null && postLikeRepository.existsByUserAndPost(currentUser, post);
+        boolean isBookmarked = currentUser != null && postBookmarkRepository.existsByUserAndPost(currentUser, post);
 
         PostResponse response = PostResponse.fromEntity(post);
         response.setLiked(isLiked);
+        response.setBookmarked(isBookmarked);
         response.setCommentCount(commentCount != null ? commentCount : 0L);
         response.setLikeCount(likeCount != null ? likeCount : 0L);
 
@@ -268,19 +318,44 @@ public class PostService {
         };
     }
 
-    private void applyImages(Post post, MultipartFile[] imageFiles, Integer thumbnailIndex, boolean isNewPost) {
+    private void applyImages(Post post, MultipartFile[] imageFiles, Integer thumbnailIndex, boolean isNewPost, List<String> deletedImageUrls) {
+        applyImages(post, imageFiles, thumbnailIndex, isNewPost, deletedImageUrls, null);
+    }
+    
+    private void applyImages(Post post, MultipartFile[] imageFiles, Integer thumbnailIndex, boolean isNewPost, List<String> deletedImageUrls, List<String> imageOrderUrls) {
         boolean hasNewImages = imageFiles != null && imageFiles.length > 0;
+        boolean hasDeletedImages = deletedImageUrls != null && !deletedImageUrls.isEmpty();
+        boolean hasImageOrder = imageOrderUrls != null && !imageOrderUrls.isEmpty();
 
-        if (!isNewPost && hasNewImages) {
-            List<PostImage> existingImages = new ArrayList<>(post.getImages());
-            for (PostImage image : existingImages) {
+        // 수정 모드에서 삭제할 이미지 처리
+        if (!isNewPost && hasDeletedImages) {
+            List<PostImage> imagesToDelete = post.getImages().stream()
+                    .filter(image -> deletedImageUrls.contains(image.getImageUrl()))
+                    .toList();
+            
+            for (PostImage image : imagesToDelete) {
                 fileUploadService.deleteImage(image.getImageUrl());
+                post.getImages().remove(image);
             }
-            post.clearImages();
         }
 
+        // 수정 모드에서 이미지 순서 업데이트
+        if (!isNewPost && hasImageOrder) {
+            // imageOrderUrls의 순서대로 기존 이미지의 sortOrder 업데이트
+            for (int i = 0; i < imageOrderUrls.size(); i++) {
+                final int sortOrder = i; // final 변수로 만들어서 람다에서 사용 가능하도록
+                String imageUrl = imageOrderUrls.get(i);
+                post.getImages().stream()
+                        .filter(image -> image.getImageUrl().equals(imageUrl))
+                        .findFirst()
+                        .ifPresent(image -> image.setSortOrder(sortOrder));
+            }
+        }
+
+        // 새 이미지 추가 (기존 이미지는 유지하고 새 이미지만 추가)
         if (hasNewImages) {
-            int order = 0;
+            // 기존 이미지 개수 또는 imageOrderUrls 길이부터 시작
+            int order = hasImageOrder ? imageOrderUrls.size() : post.getImages().size();
             for (MultipartFile imageFile : imageFiles) {
                 if (imageFile == null || imageFile.isEmpty()) {
                     continue;
@@ -330,6 +405,26 @@ public class PostService {
             return user;
         } else {
             throw new ResourceNotFoundException("유저 인증 정보가 올바르지 않습니다. (Principal: " + principal + ")");
+        }
+    }
+
+    private Optional<User> getCurrentUserFromContextOptional() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal())) {
+                return Optional.empty();
+            }
+
+            Object principal = authentication.getPrincipal();
+
+            if (principal instanceof User) {
+                return Optional.of((User) principal);
+            } else {
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 }
