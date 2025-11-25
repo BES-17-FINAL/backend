@@ -34,15 +34,17 @@ public class ScheduleService {
                 .orElseThrow(() -> new IllegalArgumentException("관광지를 찾을 수 없습니다."));
 
         // SpotService를 사용하여 spotDetail과 동일한 방식으로 title 가져오기
-        String spotTitle;
-        try {
-            com.example.backend.dto.SpotResponse spotResponse = spotService.getSpotById(request.getSpotId());
-            spotTitle = spotResponse.getTitle() != null ? spotResponse.getTitle() : "관광지 #" + spot.getApiSpotId();
-        } catch (Exception e) {
-            e.printStackTrace();
-            spotTitle = "관광지 #" + spot.getApiSpotId();
+        String spotTitle = request.getSpotTitle();
+        if (spotTitle == null || spotTitle.trim().isEmpty()) {
+            try {
+                com.example.backend.dto.SpotResponse spotResponse = spotService.getSpotById(request.getSpotId());
+                spotTitle = spotResponse.getTitle() != null ? spotResponse.getTitle() : "관광지 #" + spot.getApiSpotId();
+            } catch (Exception e) {
+                e.printStackTrace();
+                spotTitle = "관광지 #" + spot.getApiSpotId();
+            }
         }
-        
+
         TravelSchedule schedule = TravelSchedule.builder()
                 .user(user)
                 .spotId(spot.getId())
@@ -65,29 +67,14 @@ public class ScheduleService {
             List<TravelSchedule> schedules;
 
             if (startDate != null && endDate != null) {
-                schedules = travelScheduleRepository.findAllByUserAndStartDateBetweenOrderByStartDateAscStartTimeAsc(user, startDate, endDate);
+                schedules = travelScheduleRepository
+                        .findAllByUserAndStartDateBetweenOrderByStartDateAscStartTimeAsc(user, startDate, endDate);
             } else {
                 schedules = travelScheduleRepository.findAllByUserOrderByStartDateAscStartTimeAsc(user);
             }
 
             return schedules.stream()
-                    .map(schedule -> {
-                        try {
-                            // SpotService를 사용하여 spotDetail과 동일한 방식으로 title 가져오기
-                            System.out.println("일정 조회 - scheduleId: " + schedule.getId() + ", spotId: " + schedule.getSpotId());
-                            com.example.backend.dto.SpotResponse spotResponse = spotService.getSpotById(schedule.getSpotId());
-                            String spotTitle = spotResponse.getTitle();
-                            System.out.println("가져온 spotTitle: " + spotTitle);
-                            String finalTitle = spotTitle != null && !spotTitle.trim().isEmpty() ? spotTitle : schedule.getTitle();
-                            System.out.println("최종 사용할 title: " + finalTitle);
-                            return ScheduleSummaryResponse.fromEntity(schedule, finalTitle);
-                        } catch (Exception e) {
-                            // SpotService 호출 실패 시 schedule의 title 사용
-                            System.err.println("SpotService 호출 실패 - scheduleId: " + schedule.getId() + ", spotId: " + schedule.getSpotId());
-                            e.printStackTrace();
-                            return ScheduleSummaryResponse.fromEntity(schedule, schedule.getTitle());
-                        }
-                    })
+                    .map(schedule -> ScheduleSummaryResponse.fromEntity(schedule, schedule.getTitle()))
                     .toList();
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,15 +85,7 @@ public class ScheduleService {
     public ScheduleResponse getSchedule(Long scheduleId, Long userId) {
         try {
             TravelSchedule schedule = getScheduleOrThrow(scheduleId, userId);
-            // SpotService를 사용하여 spotDetail과 동일한 방식으로 title 가져오기
-            try {
-                com.example.backend.dto.SpotResponse spotResponse = spotService.getSpotById(schedule.getSpotId());
-                String spotTitle = spotResponse.getTitle();
-                return ScheduleResponse.fromEntity(schedule, spotTitle != null ? spotTitle : schedule.getTitle());
-            } catch (Exception e) {
-                // SpotService 호출 실패 시 schedule의 title 사용
-                return ScheduleResponse.fromEntity(schedule, schedule.getTitle());
-            }
+            return ScheduleResponse.fromEntity(schedule, schedule.getTitle());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("일정 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
@@ -125,18 +104,9 @@ public class ScheduleService {
                     request.getEndDate(),
                     request.getStartTime(),
                     request.getEndTime(),
-                    request.getOrderIndex()
-            );
+                    request.getOrderIndex());
 
-            // SpotService를 사용하여 spotDetail과 동일한 방식으로 title 가져오기
-            try {
-                com.example.backend.dto.SpotResponse spotResponse = spotService.getSpotById(schedule.getSpotId());
-                String spotTitle = spotResponse.getTitle();
-                return ScheduleResponse.fromEntity(schedule, spotTitle != null ? spotTitle : schedule.getTitle());
-            } catch (Exception e) {
-                // SpotService 호출 실패 시 schedule의 title 사용
-                return ScheduleResponse.fromEntity(schedule, schedule.getTitle());
-            }
+            return ScheduleResponse.fromEntity(schedule, schedule.getTitle());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("일정 수정 중 오류가 발생했습니다: " + e.getMessage(), e);
@@ -165,4 +135,3 @@ public class ScheduleService {
     }
 
 }
-

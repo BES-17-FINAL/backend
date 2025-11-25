@@ -18,6 +18,8 @@ public class ScheduleCreateRequest {
     @NotNull(message = "관광지 ID는 필수입니다.")
     private Long spotId;
 
+    private String spotTitle; // 프론트엔드에서 전달받은 관광지 제목
+
     private String description;
 
     @NotNull(message = "시작 날짜는 필수입니다.")
@@ -32,4 +34,3 @@ public class ScheduleCreateRequest {
 
     private Integer orderIndex;
 }
-
